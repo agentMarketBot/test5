@@ -48,84 +48,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-
-      - name: Determine build configuration
-        run: |
-          # All projects are assumed to be Vite projects that build to 'dist' folder
-          BUILD_DIR="dist"
-          echo "🏗️ Using 'dist' directory for Vite project builds"
-          
-          # Set environment variable for subsequent steps
-          echo "BUILD_DIR=$BUILD_DIR" >> $GITHUB_ENV
-          echo "✅ Build directory set to: $BUILD_DIR"
+          cache: 'npm'
 
       - name: Install dependencies
-        run: |
-          echo "Installing dependencies for Vite project..."
-          if [ -f "package-lock.json" ]; then
-            echo "Lock file found, using npm ci"
-            npm ci
-          else
-            echo "Using npm install"
-            npm install
-          fi
-
-      - name: Create firebase.json if not exists
-        run: |
-          if [ ! -f "firebase.json" ]; then
-            echo "Creating firebase.json for hosting configuration..."
-            echo "Using dist directory for Vite project"
-            
-            cat > firebase.json << EOF
-          {
-            "hosting": {
-              "public": "dist",
-              "ignore": [
-                "firebase.json",
-                "**/.*",
-                "**/node_modules/**"
-              ],
-              "rewrites": [
-                {
-                  "source": "**",
-                  "destination": "/index.html"
-                }
-              ]
-            }
-          }
-          EOF
-            echo "firebase.json created successfully with public directory: dist"
-          else
-            echo "firebase.json already exists"
-          fi
+        run: npm ci
 
       - name: Build project
-        run: |
-          echo "🏗️ Building Vite project to dist directory"
-          
-          # Ensure dist directory exists
-          mkdir -p dist
-          
-          # Run the build command
-          echo "📦 Running npm run build..."
-          if npm run build; then
-            echo "✅ Build completed successfully"
-            
-            # Check if build output is in dist directory
-            if [ "$(ls -A dist 2>/dev/null)" ]; then
-              echo "✅ Build directory contains files"
-              echo "📁 Build output in dist:"
-              ls -la dist/
-            else
-              echo "❌ Build directory is empty!"
-              exit 1
-            fi
-          else
-            echo "❌ Build failed!"
-            exit 1
-          fi
-          
-          echo "✅ Vite build ready for deployment"
+        run: npm run build
 
       - name: Deploy to Firebase Hosting Channel
         id: firebase_deploy
